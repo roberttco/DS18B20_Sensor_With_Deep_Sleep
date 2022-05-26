@@ -12,7 +12,7 @@ const char *ssid = WIFI_SSID;
 int status = WL_IDLE_STATUS;
 int reconnectLoops = 0;
 
-#if DEBUG == 1
+#ifdef DEBUG
 
 const char *StatusToString(int status)
 {
@@ -67,7 +67,7 @@ boolean ConnectToWiFi()
 
     while (wifiStatus != WL_CONNECTED)
     {
-#if DEBUG == 1
+#ifdef DEBUG
         //Serial.printf("ET: %li, Retries: %i, WiFi connect status: %i\n",millis() - starttime, retries, wifiStatus);
 #endif
         retries++;
@@ -112,7 +112,7 @@ boolean ConnectToWiFi()
     if (wifiStatus == WL_CONNECTED)
     {
         rval = true;
-#if DEBUG == 1
+#ifdef DEBUG
         Serial.printf ("Connected to %s.  Assigned IP:",ssid);
         Serial.println(WiFi.localIP());
 #endif

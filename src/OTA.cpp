@@ -2,7 +2,7 @@
 #include "ota.h"
 #include "main.h"
 
-#if DEBUG == 1
+#ifdef DEBUG
 
 void update_started()
 {
@@ -34,7 +34,7 @@ void checkForUpdates(String mac)
     String fwVersionURL = fwURL;
     fwVersionURL.concat("/version.txt"); // fwVersionURL = /<root>/<mac>/version.txt
 
-#if DEBUG == 1
+#ifdef DEBUG
     Serial.printf("Getting firmware version from server at http://%s:%d%s\n",FW_SERVER_IP,FW_SERVER_PORT,fwVersionURL.c_str());
 #endif
 
@@ -49,7 +49,7 @@ void checkForUpdates(String mac)
         String newFWVersion = httpClient.getString();
         int newVersion = newFWVersion.toInt();
         
-#if DEBUG == 1
+#ifdef DEBUG
         Serial.printf("Current FW version = %d, Available FW version = %d\n",FW_VERSION,newVersion);
 #endif
         if (newVersion != FW_VERSION)
@@ -57,7 +57,7 @@ void checkForUpdates(String mac)
             String fwImageURL = fwURL;
             fwImageURL.concat("/firmware.bin"); // fwImageURL = /<root>/<mac>/firmware.bin
 
-#if DEBUG == 1
+#ifdef DEBUG
             Serial.printf("Getting firmware from server at http://%s:%d%s\n",FW_SERVER_IP,FW_SERVER_PORT,fwImageURL.c_str());
 
             ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
@@ -82,7 +82,7 @@ void checkForUpdates(String mac)
                 delay(10000);
             }
 
-#if DEBUG == 1
+#ifdef DEBUG
             switch (ret)
             {
             case HTTP_UPDATE_FAILED:

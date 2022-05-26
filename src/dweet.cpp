@@ -21,7 +21,7 @@ boolean DWEET_ConnectAndSend(const char *buf)
         http.begin(wifiClient, DWEET_SERVER, DWEET_PORT, dweetUrl.c_str()); //Specify request destination
         http.addHeader("Content-Type", "application/json");         //Specify content-type header
 
-#if DEBUG == 1
+#ifdef DEBUG
         Serial.printf("HTTP result code = %u\n",http.POST(buf));
 #endif
         // No need to end if the system is being restarted because of deep sleep

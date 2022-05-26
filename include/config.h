@@ -23,10 +23,6 @@
 
 #define CLIENT_ID_TEMPLATE  "Sensor%s"
 
-#ifndef DEEP_SLEEP
-#define DEEP_SLEEP == 0
-#endif
-
 #ifndef DEEP_SLEEP_TIME_SECONDS
 #define DEEP_SLEEP_TIME_SECONDS 300
 #endif
@@ -36,34 +32,26 @@
 #define MQTT_BROKER "192.168.2.6"
 #define MQTT_PORT 24552
 
-#ifndef SCAN_SSIDS
-#define SCAN_SSIDS
-#endif
-
-#ifndef DEBUG
-#define DEBUG 1
-#endif
-
 #ifndef SSID_RESCANLOOPS
 #define SSID_RESCANLOOPS 12 // how many measurements loops between SSID scans
 #endif
 
 // battery measurement defines
 
-#ifndef FUEL_GAUGE_LOOPS
-#define FUEL_GAUGE_LOOPS 1  // sample the battery every loop
+#ifndef VCC_MEASURE_MODE
+#define VCC_MEASURE_MODE 0   // 0=use TOUT, 1=measure the internal VCC
 #endif
 
-#ifndef ADC_FILTER_SIZE
-#define ADC_FILTER_SIZE 0
+#ifndef ADC_TO_VOLTS_M
+    #if VCC_MEASURE_MODE == 0
+        #error You must define ADC_TO_VOLTS_M if VCC_MEASURE_MODE=0
+    #endif
 #endif
 
-#ifndef ADC_FILTER_PERIOD
-#define ADC_FILTER_PERIOD 0
-#endif
-
-#ifndef VCC_MEASUREMODE
-#define VCC_MEASUREMODE 0   // 0=use TOUT, 1=measure the internal VCC
+#ifndef ADC_TO_VOLTS_B
+    #if VCC_MEASURE_MODE == 0
+        #error You must define ADC_TO_VOLTS_B if VCC_MEASURE_MODE=0
+    #endif
 #endif
 
 // #define CALIBRATE_VCC
@@ -76,5 +64,7 @@
 #ifndef VCC_CUTOFF
 #define VCC_CUTOFF 0
 #endif
+
+
 
 #endif

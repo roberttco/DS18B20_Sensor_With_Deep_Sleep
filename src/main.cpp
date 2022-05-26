@@ -26,8 +26,6 @@ RtcMemory rtcMemory;
 char buf[1024];
 char clientId[64];
 float tempc = 0;
-double ucvdd = 0;
-double vdd = 0;
 
 RtcData *rtcData = NULL;
 String myMac;
@@ -35,7 +33,7 @@ String myMac;
 unsigned long starttime;
 unsigned long sleepTimeSeconds = DEEP_SLEEP_TIME_SECONDS;
 
-#if VCC_MEASUREMODE == 1
+#if VCC_MEASURE_MODE == 1
 // make it so the A/D converter reads VDD
 ADC_MODE(ADC_VCC);
 #else
@@ -70,24 +68,18 @@ void setup()
     rtcData = rtcMemory.getData<RtcData>();
 
     // sanity check
-    if (rtcData->fuelGaugeLoops > ADC_FILTER_SIZE)
-    {
-        rtcData->fuelGaugeLoops = 0;
-    }
-
     if (rtcData->loopsBeforeScan > SSID_RESCANLOOPS)
     {
         rtcData->loopsBeforeScan = 0;
     }
 
-#if DEBUG == 1
-    Serial.printf("RTC Data:\n    Valid: 0x%X\n    Channel: %d\n    ap_mac: %s\n    ds1820addr: %s\n    Loops before scan: %i\n    Fuel gauge loops: %i\n",
+#ifdef DEBUG
+    Serial.printf("RTC Data:\n    Valid: 0x%X\n    Channel: %d\n    ap_mac: %s\n    ds1820addr: %s\n    Loops before scan: %i\n",
                   rtcData->valid,
                   rtcData->channel,
                   macAddressToString(rtcData->ap_mac).c_str(),
                   oneWireAddressToString(rtcData->ds1820addr,false).c_str(),
-                  rtcData->loopsBeforeScan,
-                  rtcData->fuelGaugeLoops);
+                  rtcData->loopsBeforeScan);
 #endif
 
     // if gpio 13 is low, then wipe the RTC data and force a rediscovery of the AP and the DS18B20 address
@@ -104,53 +96,26 @@ void setup()
         ESP.restart();
     }
 
-#if DEBUG == 1
+#ifdef DEBUG
     Serial.printf("ET: %li, Setup() complete\n",millis() - starttime);
 #endif
 }
 
 void loop()
 {
-    double adcavg = -1;
+    uint16_t adcval = 0;
+    double vcc = 0;
 
-    if (rtcData->fuelGaugeLoops >= FUEL_GAUGE_LOOPS)
-    {
-#if DEBUG == 1
-    Serial.printf ("Calculating ADC average over %d samples.\n",ADC_FILTER_SIZE);
-#endif
-
-#if VCC_MEASUREMODE == 1
-        // get the battery voltage
-        ucvdd = ESP.getVcc() / 1000.0;
-        vdd = ucvdd + VCC_CORRECTION;
+#if VCC_MEASURE_MODE == 1
+    // get the battery voltage
+    DEBUG_PRINTLN ("Getting internal Vcc value.");
+    adcval = ESP.getVcc();
 #else
-        // TODO: get average vdd value by averaging ADC values then converting to voltage
-#if ADC_FILTER_SIZE == 0
-        adcavg = (double)analogRead(A0);
-        
-#else
-        long adcsum = 0L;
-        for (int filter = 0; filter < ADC_FILTER_SIZE; filter++)
-        {
-            adcsum += analogRead(A0);
-            if (0 != ADC_FILTER_PERIOD)
-            {
-                delay(ADC_FILTER_PERIOD);
-            }
-        }
-        adcavg = (double)adcsum / (double)(ADC_FILTER_SIZE);
+    DEBUG_PRINTLN ("Getting external Vcc value.");
+    adcval = analogRead(A0);
 #endif
-        Serial.println(adcavg); // used for serial plotting in Arduino IDE
-    
-        ucvdd = adcavg / 1000.0;
-        vdd = ucvdd + VCC_CORRECTION;
-#endif
-        rtcData->fuelGaugeLoops = 0;
-    }
-    else
-    {
-        rtcData->fuelGaugeLoops += 1;
-    }
+    // linear approximation -> y = Mx + B with M and B measured on the sensor.
+    vcc = ((double)ADC_TO_VOLTS_M * (double)adcval + (double)ADC_TO_VOLTS_B) + (double)VCC_CORRECTION; // linear approximation -> y = Mx + B
 
 #ifdef CALIBRATE_VCC
     DEBUG_PRINTLN("Take VCC reading now - you have 5 seconds.");
@@ -168,29 +133,29 @@ void loop()
         DEBUG_PRINTLN("Getting DS18B0 address (and storing it for next time).");
         while (selected == 0 && ds.selectNext())
         {
-#if DEBUG == 1
-            switch (ds.getFamilyCode())
-            {
-            case MODEL_DS18S20:
-                Serial.println("Model: DS18S20/DS1820");
-                break;
-            case MODEL_DS1822:
-                Serial.println("Model: DS1822");
-                break;
-            case MODEL_DS18B20:
-                Serial.println("Model: DS18B20");
-                break;
-            default:
-                Serial.println("Unrecognized Device");
-                break;
-            }
-#endif
+// #ifdef DEBUG
+//             switch (ds.getFamilyCode())
+//             {
+//             case MODEL_DS18S20:
+//                 Serial.println("Model: DS18S20/DS1820");
+//                 break;
+//             case MODEL_DS1822:
+//                 Serial.println("Model: DS1822");
+//                 break;
+//             case MODEL_DS18B20:
+//                 Serial.println("Model: DS18B20");
+//                 break;
+//             default:
+//                 Serial.println("Unrecognized Device");
+//                 break;
+//             }
+// #endif
 
             uint8_t ds18b20address[8];
             ds.getAddress(ds18b20address);
             selected = 1;
 
-#if DEBUG == 1
+#ifdef DEBUG
     Serial.printf("ET: %li, DS18B20 address retrieved - ",millis() - starttime);
     DEBUG_PRINTLN(oneWireAddressToString(ds18b20address,false));
 #endif
@@ -213,8 +178,8 @@ void loop()
         tempc = 255;
     }
 
-#if DEBUG == 1
-    Serial.printf("ET: %li, Tempc: %f, ADC: %.4f, UcVdd: %f, Vdd: %f\n",millis() - starttime,tempc,adcavg,ucvdd,vdd);
+#ifdef DEBUG
+    Serial.printf("ET: %li, Tempc: %f, ADC: %u, Vdd: %.4f\n",millis() - starttime,tempc,adcval,vcc);
 #endif
 
     // Now send out the measurements
@@ -236,7 +201,7 @@ void loop()
             rtcData->valid |= APVALID;
             memcpy(rtcData->ap_mac, WiFi.BSSID(), 6); // Copy 6 bytes of BSSID (AP's MAC address)
 
-#if DEBUG == 1
+#ifdef DEBUG
     Serial.printf("ET: %li, Connected to WiFi\n",millis() - starttime);
 #endif
             break;
@@ -244,7 +209,7 @@ void loop()
         else
         {
             // wait 10 second between retries.
-#if DEBUG == 1
+#ifdef DEBUG
             Serial.printf("ET: %li, WiFi connect failed.  Waiting 10 seconds.\n",millis() - starttime);
 #endif
             delay(10000);
@@ -255,7 +220,7 @@ void loop()
 
     if (connectRetries == 0)
     {
-#if DEBUG == 1
+#ifdef DEBUG
         Serial.printf("ET: %li, Connect retries exhausted.  Clearing RTC data and sleeping for 5 minutes.\n",millis() - starttime);
 #endif
        
@@ -278,15 +243,26 @@ void loop()
             rssi = 0;
         }
 
-#if DEBUG == 1
+#ifdef DEBUG
         Serial.printf("ET: %li, Got RSSI (%ld)\n",millis() - starttime,rssi);
 #endif
 
         double tempf = tempc * 1.8 + 32;
 
+        if (vcc < VCC_CUTOFF)
+        {
+            // if Vdd < 3 volts then go to sleep for 1 hour hoping for some sun
+            DEBUG_PRINTLN("Sleeping for 20 minutes because Vdd is too low - hoping for some sun.");
+            sleepTimeSeconds = 1200;
+        }
+        else
+        {
+            sleepTimeSeconds = DEEP_SLEEP_TIME_SECONDS;
+        }
+
         snprintf(buf, sizeof(buf), "{ \"wifi\": { \"ssid\":\"%s\",\"connecttime\":\"%ld\", \"rssi\":\"%ld\",\"mac\":\"%s\" },"
-                                   "\"power\" : { \"adc\" : \"%.4f\", \"ucvdd\": \"%.4f\", \"vdd\": \"%.4f\", \"sleeptimeseconds\" : \"%ld\", \"ssidscanloop\" : \"%d\", \"fuelgaugeloop\" : \"%d\"},"
-                                   "\"environment\" : { \"tempf\":\"%f\", \"tempc\":\"%f\", \"humidity\":\"%f\", \"pressure_hpa\":\"%f\", \"dewpoint\" : \"%f\" },"
+                                   "\"power\" : { \"adc\" : \"%u\", \"vcc\": \"%.2f\", \"sleepseconds\" : \"%ld\", \"ssidloop\" : \"%d\", \"lowbatt\" : \"%d\"},"
+                                   "\"environment\" : { \"tempf\":\"%.2f\", \"tempc\":\"%.2f\", \"humidity\":\"%.2f\", \"pressure_hpa\":\"%.2f\", \"dewpoint\" : \"%.2f\" },"
                                    "\"firmware\" : { \"version\":\"%d\",\"date\":\"%s %s\",\"sleepmode\":\"%d\" }}",
 
                  WIFI_SSID,
@@ -294,12 +270,11 @@ void loop()
                  rssi,
                  myMac.c_str(),
 
-                 adcavg,
-                 ucvdd,
-                 vdd,
+                 adcval,
+                 vcc,
                  sleepTimeSeconds,
                  rtcData->loopsBeforeScan,
-                 rtcData->fuelGaugeLoops,
+                 (vcc < (VCC_CUTOFF + 0.1)) ? 1 : 0,
 
                  tempf,
                  tempc,
@@ -310,14 +285,14 @@ void loop()
                  FW_VERSION,
                  __DATE__,
                  __TIME__,
-#if DEEP_SLEEP == 1
+#if DEEP_SLEEP
                  1
 #else
                  0
 #endif
                 );
 
-#if DEBUG == 1
+#if DEBUG
         Serial.printf("ET: %li, JSON buffer:\n%s\n",millis() - starttime,buf);
 #endif
         
@@ -325,7 +300,7 @@ void loop()
         {
 #ifdef USE_DWEET
             DWEET_ConnectAndSend(buf);
-#if DEBUG == 1
+#ifdef DEBUG
             Serial.printf("ET: %li, JSON sent to dweet.io\n",millis() - starttime);
 #endif
 #endif
@@ -333,7 +308,7 @@ void loop()
 #ifdef USE_MQTT
             MQTT_ConnectAndSend(MQTT_TOPIC, buf);
 
-#if DEBUG == 1
+#ifdef DEBUG
             Serial.printf("ET: %li, JSON sent to MQTT broker\n",millis() - starttime);
 #endif
 
@@ -342,7 +317,7 @@ void loop()
             {
                 ScanSsidsAndSend();
                 
-#if DEBUG == 1
+#ifdef DEBUG
                 Serial.printf("ET: %li, SSIDs scanned\n",millis() - starttime);
 #endif
                 rtcData->loopsBeforeScan = 0;
@@ -356,7 +331,7 @@ void loop()
 
             checkForUpdates(myMac);
 
-#if DEBUG == 1
+#ifdef DEBUG
             Serial.printf("ET: %li, Updates checked\n",millis() - starttime);
 #endif
 
@@ -370,23 +345,12 @@ void loop()
     delay(1);
 #endif
 
-    if (vdd < VCC_CUTOFF)
-    {
-        // if Vdd < 3 volts then go to sleep for 1 hour hoping for some sun
-        DEBUG_PRINTLN("Sleeping for 20 minutes because Vdd is too low - hoping for some sun.");
-        sleepTimeSeconds = 1200;
-    }
-    else
-    {
-        sleepTimeSeconds = DEEP_SLEEP_TIME_SECONDS;
-    }
-
     // WAKE_RF_DISABLED to keep the WiFi radio disabled when we wake up
-#if DEBUG == 1
+#ifdef DEBUG
     Serial.printf("ET: %li, Sleeping for %li seconds.\n", millis() - starttime,sleepTimeSeconds);
 #endif
 
-#if DEEP_SLEEP == 1
+#if DEEP_SLEEP
     ESP.deepSleep(sleepTimeSeconds * 1e6, WAKE_RF_DISABLED);
 #else
     delay(DEEP_SLEEP_TIME_SECONDS * 1000);

@@ -16,8 +16,7 @@ typedef struct _RTCDATA
     uint8_t ap_mac[6];       // 6 bytes,  8 in total
     uint8_t ds1820addr[8];   // 8 bytes, 16 in total
     uint8_t loopsBeforeScan; // 1 byte,  17 total
-    uint8_t fuelGaugeLoops;  // 1 byte,  18 total
-    uint8_t padding[2];      // 1 byte,  20 total
+    uint8_t padding[3];      // 1 byte,  20 total
 } RtcData;
 
 #define DSVALID 0x01

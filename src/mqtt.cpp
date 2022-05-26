@@ -10,7 +10,7 @@ PubSubClient mqttClient(mqttWiFiClient);
 
 void MQTT_ConnectAndSend(char *topic, char *buf)
 {
-#if DEBUG == 1
+#ifdef DEBUG
     Serial.printf("\nConnecting to MQTT broker %s:%d using client id %s and sendig to %s\n",MQTT_BROKER,MQTT_PORT,clientId, topic);
 #endif
 
