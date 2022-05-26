@@ -24,7 +24,7 @@
 #define DWEET_THING "c440d18e-4fa7-4eb7-bafb-499b19de97ab"
 #endif
 
-//boolean SendDweet(char *buf);
+// boolean SendDweet(char *buf);
 boolean DWEET_ConnectAndSend(const char *buf);
 
 #endif // __DWEET_H

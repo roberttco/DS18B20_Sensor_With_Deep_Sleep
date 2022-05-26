@@ -44,10 +44,10 @@ const char *StatusToString(int status)
 boolean ConnectToWiFi()
 {
     boolean rval = false;
-    
+
     // the vlaue will be zero if the data isn't valid
     boolean apvalid = ((rtcData->valid & APVALID) == APVALID);
-    
+
     if (apvalid == true)
     {
         // The RTC data was good, make a quick connection
@@ -68,7 +68,7 @@ boolean ConnectToWiFi()
     while (wifiStatus != WL_CONNECTED)
     {
 #ifdef DEBUG
-        //Serial.printf("ET: %li, Retries: %i, WiFi connect status: %i\n",millis() - starttime, retries, wifiStatus);
+        // Serial.printf("ET: %li, Retries: %i, WiFi connect status: %i\n",millis() - starttime, retries, wifiStatus);
 #endif
         retries++;
         if (retries == 400) // 400 * 50ms = 2 seconds
@@ -83,7 +83,7 @@ boolean ConnectToWiFi()
             WiFi.begin(ssid, ssid);
             continue;
         }
-        
+
         if (retries == 1000) // 1000 * 50ms = 5 seconds
         {
             DEBUG_PRINTLN("No connection after 5 seconds, turing off WiFi radio and sleeping for 1 minute.");
@@ -100,7 +100,7 @@ boolean ConnectToWiFi()
 
             Serial.flush();
 
-            ESP.deepSleep(60000000, WAKE_RF_DISABLED);  // waling from this sleep restarts entire system - the next line shouldn't be called.
+            ESP.deepSleep(60000000, WAKE_RF_DISABLED); // waling from this sleep restarts entire system - the next line shouldn't be called.
             ESP.reset();
             break;
         }
@@ -113,7 +113,7 @@ boolean ConnectToWiFi()
     {
         rval = true;
 #ifdef DEBUG
-        Serial.printf ("Connected to %s.  Assigned IP:",ssid);
+        Serial.printf("Connected to %s.  Assigned IP:", ssid);
         Serial.println(WiFi.localIP());
 #endif
     }
@@ -147,16 +147,16 @@ void ScanSsidsAndSend()
 
         char ssidstr[53];
 
-        int last = min(20,n);
+        int last = min(20, n);
 
         for (int i = 0; i < min(20, n); ++i)
         {
             // Print SSID and RSSI for THE FIRST 20 networks found
-            snprintf(ssidstr, sizeof(ssidstr), "{\"n\":\"%s\",\"p\":\"%d\"}",WiFi.SSID(i).c_str(),WiFi.RSSI(i));
+            snprintf(ssidstr, sizeof(ssidstr), "{\"n\":\"%s\",\"p\":\"%d\"}", WiFi.SSID(i).c_str(), WiFi.RSSI(i));
 
-            if (i+1 < last)
+            if (i + 1 < last)
             {
-                strcat(ssidstr,",");
+                strcat(ssidstr, ",");
             }
 
             int ssidstrlen = strlen(ssidstr);

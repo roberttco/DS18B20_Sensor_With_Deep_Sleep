@@ -39,13 +39,14 @@ ADC_MODE(ADC_VCC);
 #else
 ADC_MODE(ADC_TOUT)
 #endif
-    
+
 void setup()
 {
     starttime = millis();
 
     Serial.begin(115200);
-    while (!Serial);
+    while (!Serial)
+        ;
 
     DEBUG_PRINTLN("\n------- STARTING --------\n");
 
@@ -78,7 +79,7 @@ void setup()
                   rtcData->valid,
                   rtcData->channel,
                   macAddressToString(rtcData->ap_mac).c_str(),
-                  oneWireAddressToString(rtcData->ds1820addr,false).c_str(),
+                  oneWireAddressToString(rtcData->ds1820addr, false).c_str(),
                   rtcData->loopsBeforeScan);
 #endif
 
@@ -97,7 +98,7 @@ void setup()
     }
 
 #ifdef DEBUG
-    Serial.printf("ET: %li, Setup() complete\n",millis() - starttime);
+    Serial.printf("ET: %li, Setup() complete\n", millis() - starttime);
 #endif
 }
 
@@ -108,10 +109,10 @@ void loop()
 
 #if VCC_MEASURE_MODE == 1
     // get the battery voltage
-    DEBUG_PRINTLN ("Getting internal Vcc value.");
+    DEBUG_PRINTLN("Getting internal Vcc value.");
     adcval = ESP.getVcc();
 #else
-    DEBUG_PRINTLN ("Getting external Vcc value.");
+    DEBUG_PRINTLN("Getting external Vcc value.");
     adcval = analogRead(A0);
 #endif
     // linear approximation -> y = Mx + B with M and B measured on the sensor.
@@ -119,7 +120,7 @@ void loop()
 
 #ifdef CALIBRATE_VCC
     DEBUG_PRINTLN("Take VCC reading now - you have 5 seconds.");
-    //delay here to make it easier to read VCC with a volt meter to calibrate the VCC correction value
+    // delay here to make it easier to read VCC with a volt meter to calibrate the VCC correction value
     delay(5000);
 #endif
 
@@ -133,31 +134,31 @@ void loop()
         DEBUG_PRINTLN("Getting DS18B0 address (and storing it for next time).");
         while (selected == 0 && ds.selectNext())
         {
-// #ifdef DEBUG
-//             switch (ds.getFamilyCode())
-//             {
-//             case MODEL_DS18S20:
-//                 Serial.println("Model: DS18S20/DS1820");
-//                 break;
-//             case MODEL_DS1822:
-//                 Serial.println("Model: DS1822");
-//                 break;
-//             case MODEL_DS18B20:
-//                 Serial.println("Model: DS18B20");
-//                 break;
-//             default:
-//                 Serial.println("Unrecognized Device");
-//                 break;
-//             }
-// #endif
+            // #ifdef DEBUG
+            //             switch (ds.getFamilyCode())
+            //             {
+            //             case MODEL_DS18S20:
+            //                 Serial.println("Model: DS18S20/DS1820");
+            //                 break;
+            //             case MODEL_DS1822:
+            //                 Serial.println("Model: DS1822");
+            //                 break;
+            //             case MODEL_DS18B20:
+            //                 Serial.println("Model: DS18B20");
+            //                 break;
+            //             default:
+            //                 Serial.println("Unrecognized Device");
+            //                 break;
+            //             }
+            // #endif
 
             uint8_t ds18b20address[8];
             ds.getAddress(ds18b20address);
             selected = 1;
 
 #ifdef DEBUG
-    Serial.printf("ET: %li, DS18B20 address retrieved - ",millis() - starttime);
-    DEBUG_PRINTLN(oneWireAddressToString(ds18b20address,false));
+            Serial.printf("ET: %li, DS18B20 address retrieved - ", millis() - starttime);
+            DEBUG_PRINTLN(oneWireAddressToString(ds18b20address, false));
 #endif
 
             rtcData->valid |= DSVALID;
@@ -167,7 +168,7 @@ void loop()
     }
 
     // assign the client ID using the DS18B20 address - which will be unique to the sensor
-    sprintf(clientId,CLIENT_ID_TEMPLATE,oneWireAddressToString(rtcData->ds1820addr,true).c_str());
+    sprintf(clientId, CLIENT_ID_TEMPLATE, oneWireAddressToString(rtcData->ds1820addr, true).c_str());
 
     if (selected != 0)
     {
@@ -179,7 +180,7 @@ void loop()
     }
 
 #ifdef DEBUG
-    Serial.printf("ET: %li, Tempc: %f, ADC: %u, Vdd: %.4f\n",millis() - starttime,tempc,adcval,vcc);
+    Serial.printf("ET: %li, Tempc: %f, ADC: %u, Vdd: %.4f\n", millis() - starttime, tempc, adcval, vcc);
 #endif
 
     // Now send out the measurements
@@ -202,7 +203,7 @@ void loop()
             memcpy(rtcData->ap_mac, WiFi.BSSID(), 6); // Copy 6 bytes of BSSID (AP's MAC address)
 
 #ifdef DEBUG
-    Serial.printf("ET: %li, Connected to WiFi\n",millis() - starttime);
+            Serial.printf("ET: %li, Connected to WiFi\n", millis() - starttime);
 #endif
             break;
         }
@@ -210,7 +211,7 @@ void loop()
         {
             // wait 10 second between retries.
 #ifdef DEBUG
-            Serial.printf("ET: %li, WiFi connect failed.  Waiting 10 seconds.\n",millis() - starttime);
+            Serial.printf("ET: %li, WiFi connect failed.  Waiting 10 seconds.\n", millis() - starttime);
 #endif
             delay(10000);
         }
@@ -221,9 +222,9 @@ void loop()
     if (connectRetries == 0)
     {
 #ifdef DEBUG
-        Serial.printf("ET: %li, Connect retries exhausted.  Clearing RTC data and sleeping for 5 minutes.\n",millis() - starttime);
+        Serial.printf("ET: %li, Connect retries exhausted.  Clearing RTC data and sleeping for 5 minutes.\n", millis() - starttime);
 #endif
-       
+
         // clear RTC data in case there is something amiss with the info - get a fresh start.
         memset(rtcData, 0, sizeof(RtcData));
         sleepTimeSeconds = 300;
@@ -244,7 +245,7 @@ void loop()
         }
 
 #ifdef DEBUG
-        Serial.printf("ET: %li, Got RSSI (%ld)\n",millis() - starttime,rssi);
+        Serial.printf("ET: %li, Got RSSI (%ld)\n", millis() - starttime, rssi);
 #endif
 
         double tempf = tempc * 1.8 + 32;
@@ -290,18 +291,18 @@ void loop()
 #else
                  0
 #endif
-                );
+        );
 
 #if DEBUG
-        Serial.printf("ET: %li, JSON buffer:\n%s\n",millis() - starttime,buf);
+        Serial.printf("ET: %li, JSON buffer:\n%s\n", millis() - starttime, buf);
 #endif
-        
+
         if (WiFi.status() == WL_CONNECTED)
         {
 #ifdef USE_DWEET
             DWEET_ConnectAndSend(buf);
 #ifdef DEBUG
-            Serial.printf("ET: %li, JSON sent to dweet.io\n",millis() - starttime);
+            Serial.printf("ET: %li, JSON sent to dweet.io\n", millis() - starttime);
 #endif
 #endif
 
@@ -309,16 +310,16 @@ void loop()
             MQTT_ConnectAndSend(MQTT_TOPIC, buf);
 
 #ifdef DEBUG
-            Serial.printf("ET: %li, JSON sent to MQTT broker\n",millis() - starttime);
+            Serial.printf("ET: %li, JSON sent to MQTT broker\n", millis() - starttime);
 #endif
 
 #ifdef SCAN_SSIDS
             if (rtcData->loopsBeforeScan >= SSID_RESCANLOOPS)
             {
                 ScanSsidsAndSend();
-                
+
 #ifdef DEBUG
-                Serial.printf("ET: %li, SSIDs scanned\n",millis() - starttime);
+                Serial.printf("ET: %li, SSIDs scanned\n", millis() - starttime);
 #endif
                 rtcData->loopsBeforeScan = 0;
             }
@@ -332,9 +333,8 @@ void loop()
             checkForUpdates(myMac);
 
 #ifdef DEBUG
-            Serial.printf("ET: %li, Updates checked\n",millis() - starttime);
+            Serial.printf("ET: %li, Updates checked\n", millis() - starttime);
 #endif
-
         }
     }
 
@@ -347,7 +347,7 @@ void loop()
 
     // WAKE_RF_DISABLED to keep the WiFi radio disabled when we wake up
 #ifdef DEBUG
-    Serial.printf("ET: %li, Sleeping for %li seconds.\n", millis() - starttime,sleepTimeSeconds);
+    Serial.printf("ET: %li, Sleeping for %li seconds.\n", millis() - starttime, sleepTimeSeconds);
 #endif
 
 #if DEEP_SLEEP

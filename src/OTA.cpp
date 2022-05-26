@@ -35,7 +35,7 @@ void checkForUpdates(String mac)
     fwVersionURL.concat("/version.txt"); // fwVersionURL = /<root>/<mac>/version.txt
 
 #ifdef DEBUG
-    Serial.printf("Getting firmware version from server at http://%s:%d%s\n",FW_SERVER_IP,FW_SERVER_PORT,fwVersionURL.c_str());
+    Serial.printf("Getting firmware version from server at http://%s:%d%s\n", FW_SERVER_IP, FW_SERVER_PORT, fwVersionURL.c_str());
 #endif
 
     WiFiClient wifiClient;
@@ -48,9 +48,9 @@ void checkForUpdates(String mac)
     {
         String newFWVersion = httpClient.getString();
         int newVersion = newFWVersion.toInt();
-        
+
 #ifdef DEBUG
-        Serial.printf("Current FW version = %d, Available FW version = %d\n",FW_VERSION,newVersion);
+        Serial.printf("Current FW version = %d, Available FW version = %d\n", FW_VERSION, newVersion);
 #endif
         if (newVersion != FW_VERSION)
         {
@@ -58,7 +58,7 @@ void checkForUpdates(String mac)
             fwImageURL.concat("/firmware.bin"); // fwImageURL = /<root>/<mac>/firmware.bin
 
 #ifdef DEBUG
-            Serial.printf("Getting firmware from server at http://%s:%d%s\n",FW_SERVER_IP,FW_SERVER_PORT,fwImageURL.c_str());
+            Serial.printf("Getting firmware from server at http://%s:%d%s\n", FW_SERVER_IP, FW_SERVER_PORT, fwImageURL.c_str());
 
             ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
             ESPhttpUpdate.onStart(update_started);

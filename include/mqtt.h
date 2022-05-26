@@ -29,8 +29,8 @@
 #define MQTT_TOPIC "7133egyptian/out/sensors/sensor/json"
 #endif
 
-//extern WiFiClient wifiClient;
-//extern PubSubClient mqttClient;
+// extern WiFiClient wifiClient;
+// extern PubSubClient mqttClient;
 
 void MQTT_ConnectAndSend(char *topic, char *buf);
 

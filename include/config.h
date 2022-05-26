@@ -21,7 +21,7 @@
 //#define SSID_TOPIC "7133egyptian/out/sensors/sensor2/ssidscan"
 //#define DWEET_THING "c440d18e-4fa7-4eb7-bafb-499b19de97ab"
 
-#define CLIENT_ID_TEMPLATE  "Sensor%s"
+#define CLIENT_ID_TEMPLATE "Sensor%s"
 
 #ifndef DEEP_SLEEP_TIME_SECONDS
 #define DEEP_SLEEP_TIME_SECONDS 300
@@ -39,19 +39,19 @@
 // battery measurement defines
 
 #ifndef VCC_MEASURE_MODE
-#define VCC_MEASURE_MODE 0   // 0=use TOUT, 1=measure the internal VCC
+#define VCC_MEASURE_MODE 0 // 0=use TOUT, 1=measure the internal VCC
 #endif
 
 #ifndef ADC_TO_VOLTS_M
-    #if VCC_MEASURE_MODE == 0
-        #error You must define ADC_TO_VOLTS_M if VCC_MEASURE_MODE=0
-    #endif
+#if VCC_MEASURE_MODE == 0
+#error You must define ADC_TO_VOLTS_M if VCC_MEASURE_MODE=0
+#endif
 #endif
 
 #ifndef ADC_TO_VOLTS_B
-    #if VCC_MEASURE_MODE == 0
-        #error You must define ADC_TO_VOLTS_B if VCC_MEASURE_MODE=0
-    #endif
+#if VCC_MEASURE_MODE == 0
+#error You must define ADC_TO_VOLTS_B if VCC_MEASURE_MODE=0
+#endif
 #endif
 
 // #define CALIBRATE_VCC
@@ -64,7 +64,5 @@
 #ifndef VCC_CUTOFF
 #define VCC_CUTOFF 0
 #endif
-
-
 
 #endif
